@@ -11,7 +11,7 @@ from collective.autopublishing.browser.autopublishsettings import (
     IAutopublishSettingsSchema,
 )
 from collective.autopublishing.interfaces import IBrowserLayer
-
+from DateTime import DateTime
 
 logger = logging.getLogger("collective.autopublishing")
 
@@ -94,6 +94,11 @@ def autopublish_handler(event):
 
 def handle_publishing(context, settings, dry_run=True, log=True):
     """ """
+    dates_representing_none_value = [
+        DateTime("1000/01/01"),
+        DateTime("1969/12/31"),
+        DateTime("2499/12/31"),
+    ]
     catalog = api.portal.get_tool(name="portal_catalog")
     wf = api.portal.get_tool(name="portal_workflow")
     now = context.ZopeTime()
@@ -115,7 +120,6 @@ def handle_publishing(context, settings, dry_run=True, log=True):
         query = {
             "review_state": a.initial_state,
             date_index: {"query": now, "range": "max"},
-            "enableAutopublishing": True,
             "portal_type": a.portal_types,
         }
 
@@ -132,6 +136,10 @@ def handle_publishing(context, settings, dry_run=True, log=True):
             # Out[0]: DateTime('1000/01/01')
             # ipdb> brain.expires
             # Out[0]: DateTime('2499/12/31')
+            if eff_date in dates_representing_none_value:
+                eff_date = None
+            if exp_date in dates_representing_none_value:
+                exp_date = None
 
             # we only publish if:
             # a) the effective date is set and is in the past, and if
