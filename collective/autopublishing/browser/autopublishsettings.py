@@ -13,11 +13,17 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from plone.z3cform import layout
 from plone.app.registry.browser import controlpanel
 from plone.registry.interfaces import IRegistry
+from plone.registry.field import Tuple
+from plone.registry.field import PersistentField
 
 from collective.complexrecordsproxy import ComplexRecordsProxy
 from collective.autopublishing import MyMessageFactory as _
 
 logger = logging.getLogger("collective.autopublishing")
+
+
+class PersistentObject(PersistentField, schema.Object):
+    pass
 
 
 class IAutopublishSpecification(Interface):
@@ -77,8 +83,10 @@ class AutopublishSpecificationFactory(FactoryAdapter):
 
 class IAutopublishSettingsSchema(Interface):
 
-    publish_actions = schema.Tuple(
-        value_type=schema.Object(title=_("Action"), schema=IAutopublishSpecification),
+    publish_actions = Tuple(
+        value_type=PersistentObject(
+            title=_("Action"), schema=IAutopublishSpecification
+        ),
         title=_("label_publish_actions", default="Publish actions"),
         description=_(
             "help_publish_actions",
@@ -86,11 +94,12 @@ class IAutopublishSettingsSchema(Interface):
             "module when the publishing date is met.",
         ),
         required=False,
-        default=(),
         missing_value=(),
     )
-    retract_actions = schema.Tuple(
-        value_type=schema.Object(title=_("Action"), schema=IAutopublishSpecification),
+    retract_actions = Tuple(
+        value_type=PersistentObject(
+            title=_("Action"), schema=IAutopublishSpecification
+        ),
         title=_("label_retract_actions", default="Retract actions"),
         description=_(
             "help_retract_actions",
@@ -98,7 +107,6 @@ class IAutopublishSettingsSchema(Interface):
             "module when the expiration date is met.",
         ),
         required=False,
-        default=(),
         missing_value=(),
     )
     overwrite_expiration_on_retract = schema.Bool(
