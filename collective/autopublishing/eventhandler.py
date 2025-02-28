@@ -189,6 +189,11 @@ def handle_retracting(context, settings, dry_run=True, log=True):
     catalog = api.portal.get_tool(name="portal_catalog")
     wf = api.portal.get_tool(name="portal_workflow")
     now = context.ZopeTime()
+    dates_representing_none_value = [
+        DateTime("1000/01/01"),
+        DateTime("1969/12/31"),
+        DateTime("2499/12/31"),
+    ]
 
     actions = settings.retract_actions
     action_taken = False
@@ -207,7 +212,6 @@ def handle_retracting(context, settings, dry_run=True, log=True):
         query = {
             "review_state": a.initial_state,
             date_index: {"query": now, "range": "max"},
-            "enableAutopublishing": True,
             "portal_type": a.portal_types,
         }
         brains = catalog(**query)
@@ -217,9 +221,8 @@ def handle_retracting(context, settings, dry_run=True, log=True):
         for brain in brains:
 
             exp_date = brain.expires
-            # The dates in the indexes are always set.
-            # So we need to test on the objects if the dates
-            # are actually set.
+            if exp_date in dates_representing_none_value:
+                exp_date = None
 
             # we only retract if:
             # the expiration date is set and is in the past:
